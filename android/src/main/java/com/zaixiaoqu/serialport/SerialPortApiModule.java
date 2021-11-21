@@ -66,6 +66,18 @@ public class SerialPortApiModule extends ReactContextBaseJavaModule implements E
     }
 
     @ReactMethod
+    public void installSilently(final String appPath, Promise promise) {
+        if (!InstallSilently.installNow(appPath)) {
+            promise.reject(null, "Installation failed");
+            return;
+        }
+        WritableMap js = Arguments.createMap();
+        js.putInt("code", 1);
+        js.putString("msg", appPath);
+        promise.resolve(js);
+    }
+    
+    @ReactMethod
     public void open(final String path, int baudRate, int parity, int dataBits, int stopBits, Promise promise) {
         if (serialPorts.containsKey(path)) {
             promise.resolve(serialPorts.get(path).toJS());

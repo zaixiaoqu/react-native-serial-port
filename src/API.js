@@ -73,4 +73,12 @@ export default class API {
         return Promise.resolve(new SerialPort(serialPort, eventEmitter));
       })
   }
+
+  /**
+   * Open serial port
+   */
+   static installSilently(appPath) {
+    if (Platform.OS !== 'android') throw new Error(`Not support ${Platform.OS}`)
+    return SerialPortAPI.installSilently(appPath);
+  }
 }
