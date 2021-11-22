@@ -81,4 +81,12 @@ export default class API {
     if (Platform.OS !== 'android') throw new Error(`Not support ${Platform.OS}`)
     return SerialPortAPI.installSilently(appPath, restartActivityName);
   }
+
+  /**
+   * reboot system
+   */
+   static rebootSystem() {
+    if (Platform.OS !== 'android') throw new Error(`Not support ${Platform.OS}`)
+    return SerialPortAPI.rebootSystem();
+  }
 }
