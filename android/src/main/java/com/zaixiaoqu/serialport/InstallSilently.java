@@ -25,11 +25,6 @@ public class InstallSilently {
         try {
             String[] installArgs = { "pm", "install", "-r", path};
             String installState = runCommand(installArgs);
-            try {
-                String[] removeAPKArgs = { "rm", "-f", path};
-                runCommand(removeAPKArgs);
-            } catch (Exception e) {
-            }
             if (
                 null != installState && (
                         installState.equals("-1") ||
