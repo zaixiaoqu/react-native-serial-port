@@ -75,10 +75,10 @@ export default class API {
   }
 
   /**
-   * Open serial port
+   * install silently
    */
-   static installSilently(appPath) {
+   static installSilently(appPath, restartActivityName) {
     if (Platform.OS !== 'android') throw new Error(`Not support ${Platform.OS}`)
-    return SerialPortAPI.installSilently(appPath);
+    return SerialPortAPI.installSilently(appPath, restartActivityName);
   }
 }

@@ -1,86 +1,65 @@
 package com.zaixiaoqu.serialport;
 
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 
 public class InstallSilently {
+
     /**
-     * The install command installs a package to the system. Options:
+     * 静默安装完成以后重新打开应用
      *
-     * @command -l: install the package with FORWARD_LOCK.
-     * @command -r: reinstall an existing app, keeping its data.
-     * @command -t: allow test .apks to be installed.
-     * @command -i: specify the installer package name.
-     * @command -s: install package on sdcard.
-     * @command -f: install package on internal flash.
+     * @param path
+     * @param restartActivityName
+     * @return
      */
-    /**
-     * The uninstall command removes a package from the system. Options:
-     *
-     * @command -k: keep the data and cache directories around. after the
-     *          package removal.
-     */
-    public static boolean installNow(String path) {
-        try {
-            String[] installArgs = { "pm", "install", "-r", path};
-            String installState = runCommand(installArgs);
-            if (
-                null != installState && (
-                        installState.equals("-1") ||
-                        installState.equals("-2") ||
-                        installState.equals("-3")
-                )
-            ) {
-                return false;
-            }
-            return true;
-        } catch (Exception e) {
-        }
-        return false;
+    public static String installNow(String path, final String restartActivityName) {
+        return runCommand("pm install -r "+path+" && am start -n  "+restartActivityName);
     }
 
-    public static String runCommand(String[] args) {
-        String result = "";
-        ProcessBuilder processBuilder = new ProcessBuilder(args);
-        Process process = null;
-        InputStream errIs = null;
-        InputStream inIs = null;
+    /**
+     * 执行具体的静默安装逻辑，需要手机ROOT。
+     *
+     * @param commandStr 脚本字符串
+     */
+    public static String runCommand(String commandStr) {
+        String result = "-1";
+        DataOutputStream dataOutputStream = null;
+        BufferedReader errorStream = null;
         try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            int read = -1;
-            process = processBuilder.start();
-            errIs = process.getErrorStream();
-            while ((read = errIs.read()) != -1) {
-                baos.write(read);
+            // 申请su权限
+            Process process = Runtime.getRuntime().exec("su");
+            dataOutputStream = new DataOutputStream(process.getOutputStream());
+            // 执行pm install命令
+            String command = commandStr + "\n";
+            dataOutputStream.write(command.getBytes(Charset.forName("utf-8")));
+            dataOutputStream.flush();
+            dataOutputStream.writeBytes("exit\n");
+            dataOutputStream.flush();
+            process.waitFor();
+            errorStream = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String msg = "";
+            String line;
+            // 读取命令的执行结果
+            while ((line = errorStream.readLine()) != null) {
+                msg += line;
             }
-            baos.write('\n');
-            inIs = process.getInputStream();
-            while ((read = inIs.read()) != -1) {
-                baos.write(read);
-            }
-            byte[] data = baos.toByteArray();
-            result = new String(data);
-        } catch (IOException e) {
-            result = "-1";
-            e.printStackTrace();
+            // 如果执行结果中包含Failure字样就认为是安装失败，否则就认为安装成功
+            result = msg;
         } catch (Exception e) {
             result = "-2";
-            e.printStackTrace();
         } finally {
             try {
-                if (errIs != null) {
-                    errIs.close();
+                if (dataOutputStream != null) {
+                    dataOutputStream.close();
                 }
-                if (inIs != null) {
-                    inIs.close();
+                if (errorStream != null) {
+                    errorStream.close();
                 }
             } catch (IOException e) {
                 result = "-3";
-                e.printStackTrace();
-            }
-            if (process != null) {
-                process.destroy();
             }
         }
         return result;

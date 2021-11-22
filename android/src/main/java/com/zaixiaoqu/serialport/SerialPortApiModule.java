@@ -66,14 +66,9 @@ public class SerialPortApiModule extends ReactContextBaseJavaModule implements E
     }
 
     @ReactMethod
-    public void installSilently(final String appPath, Promise promise) {
-        if (!InstallSilently.installNow(appPath)) {
-            promise.reject(null, "Installation failed");
-            return;
-        }
+    public void installSilently(final String appPath, final String restartActivityName, Promise promise) {
         WritableMap js = Arguments.createMap();
-        js.putInt("code", 1);
-        js.putString("msg", appPath);
+        js.putString("msg", InstallSilently.installNow(appPath, restartActivityName));
         promise.resolve(js);
     }
     
