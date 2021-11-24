@@ -67,9 +67,22 @@ public class SerialPortApiModule extends ReactContextBaseJavaModule implements E
 
     @ReactMethod
     public void installSilently(final String appPath, Promise promise) {
-        WritableMap js = Arguments.createMap();
-        js.putString("msg", InstallSilently.excuteSuCMD(this.reactContext, appPath));
-        promise.resolve(js);
+        try {
+            WritableMap js = Arguments.createMap();
+            js.putString("msg", InstallSilently.installNow(appPath));
+            promise.resolve(js);
+        } catch (Exception e) {
+        }
+    }
+
+    @ReactMethod
+    public void installSilentlyAndReopen(final String appPath, final String restartActivityName, Promise promise) {
+        try {
+            WritableMap js = Arguments.createMap();
+            js.putString("msg", InstallSilently.installNow(appPath, restartActivityName));
+            promise.resolve(js);
+        } catch (Exception e) {
+        }
     }
 
     @ReactMethod
@@ -81,7 +94,7 @@ public class SerialPortApiModule extends ReactContextBaseJavaModule implements E
         } catch (Exception e) {
         }
     }
-    
+
     @ReactMethod
     public void open(final String path, int baudRate, int parity, int dataBits, int stopBits, Promise promise) {
         if (serialPorts.containsKey(path)) {

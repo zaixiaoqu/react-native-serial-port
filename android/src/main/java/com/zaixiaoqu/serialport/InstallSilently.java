@@ -1,17 +1,33 @@
 package com.zaixiaoqu.serialport;
 
-import android.content.Context;
-import android.content.Intent;
-
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 public class InstallSilently {
+
+    /**
+     * 静默安装完成以后重新打开应用
+     *
+     * @param path
+     * @param restartActivityName
+     * @return
+     */
+    public static String installNow(String path, final String restartActivityName) {
+        return runCommand("LD_LIBRARY_PATH=/vendor/lib*:/system/lib* pm install -r "+path+" && am start -n  "+restartActivityName);
+    }
+
+    /**
+     * 静默安装
+     *
+     * @param path
+     * @return
+     */
+    public static String installNow(String path) {
+        return runCommand("LD_LIBRARY_PATH=/vendor/lib*:/system/lib* pm install -r "+path+" ");
+    }
 
     /**
      * 执行具体的静默安装逻辑，需要手机ROOT。
@@ -57,63 +73,5 @@ public class InstallSilently {
             }
         }
         return result;
-    }
-
-    /**
-     * 重新安装APP并发送广播
-     *
-     * @param mContext
-     * @param currenttempfilepath
-     */
-    public static String excuteSuCMD(Context mContext, String currenttempfilepath) {
-        String resultStr = "-1";
-
-        Process process = null;
-        OutputStream out = null;
-        InputStream in = null;
-        try {
-            //请求root
-            process = Runtime.getRuntime().exec("su");
-            out = process.getOutputStream();
-            //调用安装
-            out.write(("pm install -r " + currenttempfilepath + "\n").getBytes());
-            in = process.getInputStream();
-            int len = 0;
-            byte[] bs = new byte[256];
-            while (-1 != (len = in.read(bs))) {
-                String state = new String(bs, 0, len);
-                if (state.equals("success\n") || state.equals("Success\n")) {
-                    resultStr = "success";
-
-                    //安装成功后的操作
-                    //静态注册自启动广播
-                    Intent intent = new Intent();
-                    //与清单文件的receiver的anction对应
-                    intent.setAction("android.intent.action.PACKAGE_REPLACED");
-                    //发送广播
-                    mContext.sendBroadcast(intent);
-                }
-            }
-        } catch (IOException e) {
-            resultStr = "-2";
-            e.printStackTrace();
-        } catch (Exception e) {
-            resultStr = "-3";
-            e.printStackTrace();
-        } finally {
-            try {
-                if (out != null) {
-                    out.flush();
-                    out.close();
-                }
-                if (in != null) {
-                    in.close();
-                }
-            } catch (IOException e) {
-                resultStr = "-4";
-                e.printStackTrace();
-            }
-        }
-        return resultStr;
     }
 }
